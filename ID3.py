@@ -2,10 +2,6 @@ from node import Node
 import math
 from collections import Counter
 
-N = [1,2,2,3,3,3,4,4,4,4,5,5,5,5,5]
-C = Counter(N)
-
-j = [ [k,]*v for k,v in C.items()]
 
 
 def ID3(examples, default):
@@ -16,14 +12,7 @@ def ID3(examples, default):
   Any missing attributes are denoted with a value of "?"
   '''
 
-  attributes = []
-  for each in examples:
-    attributes.extend(each.keys())
-
-  attributes = list(set(attributes))
-
   best = 'x1'
-
 
   newnode = Node()
   newnode.label = best
@@ -33,10 +22,33 @@ def ID3(examples, default):
 
 
 def main():
-  print(ID3([dict(x1=1, x2=0, x3=0, Class=1),
-             dict(x1=0, x2=1, x3=0, Class=0),
-             dict(x1=1, x2=1, x3=0, Class=1),
-             dict(x1=1, x2=0, x3=0, Class=1)], 'default'))
+  # print(ID3([dict(x1=1, x2=0, x3=0, Class=1),
+  #            dict(x1=0, x2=1, x3=0, Class=0),
+  #            dict(x1=1, x2=1, x3=0, Class=1),
+  #            dict(x1=1, x2=0, x3=0, Class=1)], 'default'))
+  #print(getH([6,2]))
+  # print(getEntropy([[0],[1],[1],[1],[0],[1],[1],[1]]))
+  # print(getEntropy([[0],[0],[1],[1],[0],[1],[1],[0]]))
+  # print(getEntropy([[0], [1]]))
+  
+  data = [dict(x1=1, x2=0, x3=0, Class=1),
+          dict(x1=0, x2=1, x3=0, Class=0),
+          dict(x1=1, x2=1, x3=0, Class=1),
+          dict(x1=1, x2=0, x3=0, Class=1),
+          dict(x1=0, x2=1, x3=1, Class=0)]
+
+  data1 = [dict(x1=0, x2=0, Class=0),
+          dict(x1=0, x2=0,  Class=0),
+          dict(x1=0, x2=0,  Class=0),
+          dict(x1=0, x2=1,  Class=1),
+          dict(x1=0, x2=1,  Class=1),
+          dict(x1=0, x2=1,  Class=1),
+          dict(x1=1, x2=1,  Class=1),
+          dict(x1=1, x2=1,  Class=1),
+          dict(x1=1, x2=0,  Class=1)]
+  attributes = getAttributes(data1)
+
+  print(pick_best_attribute(data1, attributes))
 
 def prune(node, examples):
   '''
@@ -57,18 +69,41 @@ def evaluate(node, example):
   assigns to the example.
   '''
 
-def getH(example_array): # returns Entropy for examples
-  tot = 0
-  for each in example_array:    #get number of examples in split
-    tot = tot + each 
+# def getH(example_array): # returns Entropy for examples
+#   tot = 0
+#   for each in example_array:    #get number of examples in split
+#     tot = tot + each 
+
+#   tot = float(tot)
+
+#   h = 0
+
+#   for each in example_array:
+#     if each == 0: continue
+#     else: h = h + (each/tot)*(math.log((each/tot), len(example_array)))
+#   return -h
+
+def getEntropy(data): # returns Entropy for examples
+  count0 = 0
+  count1 = 0
+  for each in data:
+    if each[0] == 0: count0 += 1
+    elif each[0] == 1: count1 += 1
+    else:
+      print('Error, data is not either 0 or 1')
+      return -1
+  tot = float(len(data))
+
+  both = [count0, count1]
+  # print(both)
 
   tot = float(tot)
 
   h = 0
-
-  for each in example_array:
-    if each == 0: continue
-    else: h = h + (each/tot)*(math.log((each/tot), len(example_array)))
+  if count0 == 0 or count1 == 0: return 0
+  else:
+    for each in both:
+      h = h + (each/tot)*(math.log((each/tot), 2))
   return -h
 
 
@@ -81,6 +116,7 @@ def getAttributes(examples): # returns list of all the different attributes foun
     attributes.extend(each.keys())
 
   attributes = list(set(attributes))
+  attributes.remove('Class')
   return attributes
 
 def getValues(examples, attribute): # returns list of all the different values for attribute in examples
@@ -100,5 +136,87 @@ def getDict(examples, attribute): # returns dictionary {attr_value: list_of_exam
     newdict[each[attribute]].append(each)
 
   return newdict
+
+def pick_best_attribute(data_set, attribute_metadata):
+    '''
+    ========================================================================================================
+    Input:  A data_set, attribute_metadata, splits counts for numeric
+    ========================================================================================================
+    Job:    Find the attribute that maximizes the gain ratio. If attribute is numeric return best split value.
+            If nominal, then split value is False.
+            If gain ratio of all the attributes is 0, then return False, False
+            Only consider numeric splits for which numerical_splits_count is greater than zero
+    ========================================================================================================
+    Output: best attribute, split value if numeric
+    ========================================================================================================
+    '''
+    # Your code here
+    best = None
+    split0 = []
+    split1 = []
+    entropy = 0
+    lowest_entropy = 999
+    tot = float(len(data_set))
+    # print('tot is', tot)
+
+
+    for attribute in attribute_metadata:
+      print('INSIDE ATTRIBUTE', attribute)
+      newlist0 = []
+      newlist1 = []
+      currdict = getDict(data_set, attribute)
+      if currdict.keys() == [0, 1] or currdict.keys() == [1, 0]:
+        split0 = currdict[0]
+        split1 = currdict[1]
+        # print('We have 2 dicts')
+
+        for each in split0:
+          newlist0.append([each['Class']])
+
+        for each in split1:
+          newlist1.append([each['Class']])
+
+        print('newlist0 is', newlist0, 'newlist1 is', newlist1)
+        entropy = (len(newlist0)/tot) * getEntropy(newlist0) + (len(newlist1)/tot)*getEntropy(newlist1)
+        print('Entropy of ', attribute, 'is', entropy)
+        if entropy < lowest_entropy:
+          lowest_entropy = entropy
+          best = attribute
+
+      elif currdict.keys() == [0]:
+        print('Split on ', attribute, 'is trivial')
+        continue
+
+      elif currdict.keys() == [1]:
+        print('Split on ', attribute, 'is trivial')
+        continue
+
+      else:
+        print('ERROR NO CURRDICT')
+        return -1
+
+    return best
+
+
+
+def check_homogenous(data_set):
+    '''
+    ========================================================================================================
+    Input:  A data_set
+    ========================================================================================================
+    Job:    Checks if the output value (index 0) is the same for all examples in the the data_set, if so return that output value, otherwise return None.
+    ========================================================================================================
+    Output: Return either the homogenous attribute or None
+    ========================================================================================================
+     '''
+    # Your code here
+    pass
+# ======== Test Cases =============================
+# data_set = [[0],[1],[1],[1],[1],[1]]
+# check_homogenous(data_set) ==  None
+# data_set = [[0],[1],[None],[0]]
+# check_homogenous(data_set) ==  None
+# data_set = [[1],[1],[1],[1],[1],[1]]
+# check_homogenous(data_set) ==  1
 
 main()
