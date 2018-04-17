@@ -3,3 +3,5 @@ class Node:
     self.label = None
     self.children = {}
 	# you may want to add additional fields here...
+    self.value = None
+    self.name = None
