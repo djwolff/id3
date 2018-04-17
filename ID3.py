@@ -2,6 +2,7 @@ from node import Node
 import math
 from collections import Counter
 import copy
+import random
 
 
 def ID3(examples, default):
@@ -12,6 +13,7 @@ def ID3(examples, default):
   Any missing attributes are denoted with a value of "?"
   '''
   examples = preprocessing(examples)
+  print examples
   list_of_attributes = getAttributes(examples)
   if not examples:
       leaf = Node()
@@ -27,7 +29,7 @@ def ID3(examples, default):
       for key in split.keys():
         subtree = ID3(split[key], mode_attr(examples, 'Class'))
         leaf.children[key] = subtree
-  print(leaf.name, leaf.label)
+  # print(leaf.name, leaf.label)
 
   return leaf
 
@@ -50,7 +52,7 @@ def main():
           dict(x1=1, x2=0, x3=0, Class=1),
           dict(x1=0, x2=1, x3=1, Class=0),
           dict(x1=1, x2=0, x3=1, Class=0)], 0)
-  print(evaluate(tree, dict(x1=1, x2=1, x3=1)))
+  # print(evaluate(tree, dict(x1=1, x2=1, x3=1)))
 
   # print(mode_attr([dict(x1=1, x2=0, x3=0, Class=1),
   #         dict(x1=0, x2=1, x3=0, Class=0),
@@ -139,26 +141,30 @@ def preprocessing(example_list):
             return_list[z] = each
     return return_list
 
-def getEntropy(data): # returns Entropy for examples
-  count0 = 0
-  count1 = 0
+def getEntropy(data, attr): # returns Entropy for examples
+  count_obj = {}
+  for each in attr:
+      count_obj[each] = 0
   for each in data:
-    if each[0] == 0: count0 += 1
-    elif each[0] == 1: count1 += 1
-    else:
-      print('Error, data is not either 0 or 1')
-      return -1
+      for i, index in enumerate(attr):
+          if each == attr[i]: count_obj[attr[i]] += 1
+    # if each == 0: count0 += 1
+    # elif each == 1: count1 += 1
+    # else:
+    #   print('Error, data is not either 0 or 1')
+    #   return -1
   tot = float(len(data))
 
-  both = [count0, count1]
+  all = count_obj.values()
+
   # print(both)
 
   tot = float(tot)
 
   h = 0
-  if count0 == 0 or count1 == 0: return 0
+  if 0 in all: return 0
   else:
-    for each in both:
+    for each in all:
       h = h + (each/tot)*(math.log((each/tot), 2))
   return -h
 
@@ -208,32 +214,26 @@ def pick_best_attribute(data_set, attribute_metadata):
     '''
     # Your code here
     best = None
-    split0 = []
-    split1 = []
-    entropy = 0
     lowest_entropy = 999
+    entropy = 0
     tot = float(len(data_set))
     # print('tot is', tot)
 
-
     for attribute in attribute_metadata:
       # print('INSIDE ATTRIBUTE', attribute)
-      newlist0 = []
-      newlist1 = []
+      newobj = {}
+      newlist = []
       currdict = getDict(data_set, attribute)
-      if currdict.keys() == [0, 1] or currdict.keys() == [1, 0]:
-        split0 = currdict[0]
-        split1 = currdict[1]
-        # print('We have 2 dicts')
+      if len(currdict.keys()) > 1:
+        for i, key in enumerate(currdict.keys()):
+            for each in currdict[key]:
+                newlist.append(each['Class'])
+            newobj[i] = newlist
+            newlist = []
 
-        for each in split0:
-          newlist0.append([each['Class']])
-
-        for each in split1:
-          newlist1.append([each['Class']])
-
-        # print('newlist0 is', newlist0, 'newlist1 is', newlist1)
-        entropy = (len(newlist0)/tot) * getEntropy(newlist0) + (len(newlist1)/tot)*getEntropy(newlist1)
+        # print newobj
+        for key in newobj.keys():
+            entropy = entropy + ((len(newobj[key])/tot) * getEntropy(newobj[key], currdict.keys()))
         # print('Entropy of ', attribute, 'is', entropy)
         if entropy < lowest_entropy:
           lowest_entropy = entropy
@@ -247,11 +247,7 @@ def pick_best_attribute(data_set, attribute_metadata):
         # print('Split on ', attribute, 'is trivial')
         continue
 
-      else:
-        print('ERROR NO CURRDICT')
-        return -1
-
-    print('Splitting at ' + best)
+    # print('Splitting at ' + best)
     return best
 
 def only_trivial(data_set, attribute_metadata):
