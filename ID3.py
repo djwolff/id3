@@ -1,7 +1,7 @@
 from node import Node
 import math
 from collections import Counter
-
+import copy
 
 
 def ID3(examples, default):
@@ -11,13 +11,27 @@ def ID3(examples, default):
   and the target class variable is a special attribute with the name "Class".
   Any missing attributes are denoted with a value of "?"
   '''
+  examples = preprocessing(examples)
+  list_of_attributes = getAttributes(examples)
+  if not examples:
+      leaf = Node()
+      leaf.label = default
+  elif same_classification(examples) != None or only_trivial(examples, list_of_attributes):
+      leaf = Node()
+      leaf.label = mode_attr(examples, 'Class')
+  else:
+      best = pick_best_attribute(examples, list_of_attributes)
+      leaf = Node()
+      leaf.name = best
+      split = getDict(examples, best)
+      for key in split.keys():
+        subtree = ID3(split[key], mode_attr(examples, 'Class'))
+        leaf.children[key] = subtree
+  print(leaf.name, leaf.label)
 
-  best = 'x1'
+  return leaf
 
-  newnode = Node()
-  newnode.label = best
 
-  return getDict(examples, best)
 
 
 
@@ -30,26 +44,40 @@ def main():
   # print(getEntropy([[0],[1],[1],[1],[0],[1],[1],[1]]))
   # print(getEntropy([[0],[0],[1],[1],[0],[1],[1],[0]]))
   # print(getEntropy([[0], [1]]))
-
-  data = [dict(x1=1, x2=0, x3=0, Class=1),
+  tree = ID3([dict(x1=1, x2=0, x3=0, Class=1),
           dict(x1=0, x2=1, x3=0, Class=0),
           dict(x1=1, x2=1, x3=0, Class=1),
           dict(x1=1, x2=0, x3=0, Class=1),
-          dict(x1=0, x2=1, x3=1, Class=0)]
+          dict(x1=0, x2=1, x3=1, Class=0),
+          dict(x1=1, x2=0, x3=1, Class=0)], 0)
+  print(evaluate(tree, dict(x1=1, x2=1, x3=1)))
 
-  data1 = [dict(x1='?', x2=0,, Class=0),
-          dict(x1=1, x2='?',  Class=0),
-          dict(x1='?', x2=1,  Class=0),
-          dict(x1=0, x2='?',  Class=1),
-          dict(x1=0, x2=1,  Class=1),
-          dict(x1=0, x2=1,  Class=1),
-          dict(x1=1, x2=1,  Class=1),
-          dict(x1=1, x2=1,  Class=1),
-          dict(x1=1, x2=0,  Class=1)]
-  attributes = getAttributes(data)
+  # print(mode_attr([dict(x1=1, x2=0, x3=0, Class=1),
+  #         dict(x1=0, x2=1, x3=0, Class=0),
+  #         dict(x1=1, x2=1, x3=0, Class=1),
+  #         dict(x1=1, x2=0, x3=0, Class=1),
+  #         dict(x1=0, x2=1, x3=1, Class=0),
+  #         dict(x1=1, x2=0, x3=0, Class=1)], 'x1'))
+
+  # data = [dict(x1=1, x2=0, x3=0, Class=1),
+  #         dict(x1=0, x2=1, x3=0, Class=0),
+  #         dict(x1=1, x2=1, x3=0, Class=1),
+  #         dict(x1=1, x2=0, x3=0, Class=1),
+  #         dict(x1=0, x2=1, x3=1, Class=0)]
+
+  # data1 = [dict(x1='?', x2=0, Class=0),
+  #         dict(x1=1, x2='?',  Class=0),
+  #         dict(x1='?', x2=1,  Class=0),
+  #         dict(x1=0, x2='?',  Class=1),
+  #         dict(x1=0, x2=1,  Class=1),
+  #         dict(x1=0, x2=1,  Class=1),
+  #         dict(x1=1, x2=1,  Class=1),
+  #         dict(x1=1, x2=1,  Class=1),
+  #         dict(x1=1, x2=0,  Class=1)]
+  # attributes = getAttributes(data)
 
   # print(pick_best_attribute(data1, attributes))
-  print preprocessing(data1)
+  # print preprocessing(data1)
 
 def prune(node, examples):
   '''
@@ -62,7 +90,7 @@ def test(node, examples):
   Takes in a trained tree and a test set of examples.  Returns the accuracy (fraction
   of examples the tree classifies correctly).
   '''
-  total_length = examples.len()
+  total_length = len(examples)
   amount_correct = 0;
   for example in examples:
       correct_class = example['Class']
@@ -77,31 +105,32 @@ def evaluate(node, example):
   assigns to the example.
   '''
   current_node = node
-  while current_output.label == None:
+  while current_node.label == None:
       decision = example[current_node.name]
       if current_node.children[decision]:
           current_node = current_node.children[decision]
       else:
           print("Something went wrong in the evaluate method oops -David")
           break
-  return current_output.label
+  return current_node.label
 
 def preprocessing(example_list):
     return_list = example_list
     for z, each in enumerate(example_list):
         # Given a dictionary with missing values, return a dictionary of no missing valaues replaced by the mode of the dict.
         mode_value = 0
+        return_dict = copy.deepcopy(each)
+        class_value = return_dict.pop('Class', 0)
         return_dict = each
-        class_value = each.pop('Class', 0)
         value_list = each.values() # pop to take out the class value
         if '?' in value_list:
             parsed_list = list(filter(lambda x: x!="?", value_list))
-            print parsed_list
+            # print parsed_list
             if parsed_list:
                 mode_value = mode(parsed_list) #if there is a split decision then it takes the first value.
                 # find keys that need to replace the values
                 for i, j in enumerate(value_list):
-                    print i
+                    # print i
                     if j=="?":
                         return_dict[each.keys()[i]] = mode_value
             return_dict['Class'] = class_value
@@ -205,45 +234,54 @@ def pick_best_attribute(data_set, attribute_metadata):
 
         # print('newlist0 is', newlist0, 'newlist1 is', newlist1)
         entropy = (len(newlist0)/tot) * getEntropy(newlist0) + (len(newlist1)/tot)*getEntropy(newlist1)
-        print('Entropy of ', attribute, 'is', entropy)
+        # print('Entropy of ', attribute, 'is', entropy)
         if entropy < lowest_entropy:
           lowest_entropy = entropy
           best = attribute
 
       elif currdict.keys() == [0]:
-        print('Split on ', attribute, 'is trivial')
+        # print('Split on ', attribute, 'is trivial')
         continue
 
       elif currdict.keys() == [1]:
-        print('Split on ', attribute, 'is trivial')
+        # print('Split on ', attribute, 'is trivial')
         continue
 
       else:
         print('ERROR NO CURRDICT')
         return -1
 
+    print('Splitting at ' + best)
     return best
 
+def only_trivial(data_set, attribute_metadata):
+  flag = True
+  for attribute in attribute_metadata:
+      # print('INSIDE ATTRIBUTE', attribute)
+      currdict = getDict(data_set, attribute)
+      if currdict.keys() == [0, 1] or currdict.keys() == [1, 0]:
+        flag = False
+  # if flag == True: print("Only trivial splits")
+  return flag
 
 
-def check_homogenous(data_set):
-    '''
-    ========================================================================================================
-    Input:  A data_set
-    ========================================================================================================
-    Job:    Checks if the output value (index 0) is the same for all examples in the the data_set, if so return that output value, otherwise return None.
-    ========================================================================================================
-    Output: Return either the homogenous attribute or None
-    ========================================================================================================
-     '''
-    # Your code here
-    pass
-# ======== Test Cases =============================
-# data_set = [[0],[1],[1],[1],[1],[1]]
-# check_homogenous(data_set) ==  None
-# data_set = [[0],[1],[None],[0]]
-# check_homogenous(data_set) ==  None
-# data_set = [[1],[1],[1],[1],[1],[1]]
-# check_homogenous(data_set) ==  1
+def same_classification(example_list):
+    checker = example_list[0]['Class']
+    same = True
+    for dictionary in example_list[1:]:
+        if checker != dictionary['Class']:
+            same = False
+            break
+    if same:
+        return checker
+    else:
+        return None
+
+def mode_attr(examples, attr):
+  l = []
+  for each in examples:
+    l.append(each[attr])
+  return mode(l)
+
 
 main()
