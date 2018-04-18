@@ -91,18 +91,18 @@ def testPruningOnHouseData(inFile, size):
     withoutPruning.append(acc)
   # print withPruning
   # print withoutPruning
-  print "average with pruning",sum(withPruning)/len(withPruning)," without: ",sum(withoutPruning)/len(withoutPruning)
+  # print "average with pruning",sum(withPruning)/len(withPruning)," without: ",sum(withoutPruning)/len(withoutPruning)
   return [sum(withPruning)/len(withPruning), sum(withoutPruning)/len(withoutPruning)]
 
 def plot():
     with_prune_list = []
     without_prune_list = []
     x_axis = []
-    for x in range(10, 300):
-        if x % 10 == 0:
+    for x in range(301):
+        if x == 10 or x % 25 == 0:
             average_with = []
             average_without = []
-            for y in range(10):
+            for y in range(1):
                 result = testPruningOnHouseData("house_votes_84.data", x)
                 average_with.append(result[0])
                 average_without.append(result[1])
@@ -114,9 +114,9 @@ def plot():
     x = np.array(x_axis)
     plot_with_prune = np.array(with_prune_list)
     plot_without_prune = np.array(without_prune_list)
-    plt.plot(x_axis, plot_with_prune, 'ro-', x_axis, plot_without_prune, 'go-')
-    plt.legend(['With Pruning', 'Without Pruning'], loc=4)
-    plt.axis([0, 300, 0, 1])
+    plt.plot( x_axis, plot_without_prune, 'rx-', x_axis, plot_with_prune, 'gx-')
+    plt.legend(['Without Pruning', 'With Pruning'], loc=4)
+    plt.axis([0, 310, 0, 1])
     plt.ylabel('Accuracy')
     plt.xlabel('Data size')
     plt.title('Plot of Accuracy and Data size')

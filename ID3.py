@@ -89,21 +89,24 @@ def main():
 
   # print(pick_best_attribute(data1, attributes))
   # print preprocessing(data1)
+best_acc = 0
 def prune(node, examples):
   '''
   Takes in a trained tree and a validation set of examples.  Prunes nodes in order
   to improve accuracy on the validation data; the precise pruning strategy is up to you.
   '''
+  global best_acc
   best_acc = test(node, examples)
   # print best_acc
   # best_tree = copy.deepcopy(node)
 
   # Start pruning at root.
   # for each in examples:
-  prune_helper(node, examples, best_acc, node)
+  prune_helper(node, examples, node)
 
-def prune_helper(node, examples, best_acc, ancestor):
+def prune_helper(node, examples, ancestor):
      new_acc = 0
+     global best_acc
      if check_if_all_children_are_leafs(node) and node.label == None:
          # If all children are leafs, then find the mode of the attributes and set that leaf
          # Set the label and set children to {}, check accuracy
@@ -124,14 +127,15 @@ def prune_helper(node, examples, best_acc, ancestor):
              node.mode = mode
              node.name = name
              node.children = children
-
+         else:
+             best_acc = new_acc
      else:
          nextnodes = []
          for child in node.children.keys():
-             if node.children[child].name != None:
+             if node.children[child].name != None and len(node.children[child].children.keys()) == 0:
                  nextnodes.append(node.children[child])
          for each in nextnodes:
-             return prune_helper(each, examples, best_acc, ancestor)
+             return prune_helper(each, examples, ancestor)
 
 
 def check_if_all_children_are_leafs(node):
