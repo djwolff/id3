@@ -99,10 +99,10 @@ def plot():
     without_prune_list = []
     x_axis = []
     for x in range(10, 300):
-        if x == 10 or x % 5 == 0:
+        if x % 10 == 0:
             average_with = []
             average_without = []
-            for y in range(25):
+            for y in range(10):
                 result = testPruningOnHouseData("house_votes_84.data", x)
                 average_with.append(result[0])
                 average_without.append(result[1])

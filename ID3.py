@@ -99,8 +99,8 @@ def prune(node, examples):
   # best_tree = copy.deepcopy(node)
 
   # Start pruning at root.
-  for each in examples:
-      prune_helper(node, examples, best_acc, node)
+  # for each in examples:
+  prune_helper(node, examples, best_acc, node)
 
 def prune_helper(node, examples, best_acc, ancestor):
      new_acc = 0
