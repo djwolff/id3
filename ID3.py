@@ -31,6 +31,7 @@ def ID3(examples, default):
       for key in split.keys():
         subtree = ID3(split[key], mode_attr(examples, 'Class'))
         leaf.children[key] = subtree
+        leaf.children[key].parent = leaf
 
   # print(leaf.name, leaf.label)
 
@@ -93,6 +94,19 @@ def prune(node, examples):
   Takes in a trained tree and a validation set of examples.  Prunes nodes in order
   to improve accuracy on the validation data; the precise pruning strategy is up to you.
   '''
+  best_acc = test(node, examples)
+  new_tree = copy.deepcopy(node)
+  # Start pruning at root.
+  if new_tree.children
+
+def check_if_children_are_leafs(node):
+    all_children = len(node.children.keys())
+    counter = 0;
+    if node.children:
+        for child in node.children.keys():
+            if node.children[child].label != None:
+                counter += 1
+    return all_children == counter
 
 def test(node, examples):
   '''
