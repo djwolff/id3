@@ -27,20 +27,147 @@ def ID3(examples, default):
       best = pick_best_attribute(examples, list_of_attributes)
       leaf = Node()
       leaf.name = best
+      # print("Split at ", best)
+      leaf.mode = mode_attr(examples, 'Class')
       split = getDict(examples, best)
       for key in split.keys():
         subtree = ID3(split[key], mode_attr(examples, 'Class'))
         leaf.children[key] = subtree
+        leaf.children[key].parent = leaf
 
   # print(leaf.name, leaf.label)
 
   return leaf
 
 
+def prune(node, examples):
+  '''
+  Takes in a trained tree and a validation set of examples.  Prunes nodes in order
+  to improve accuracy on the validation data; the precise pruning strategy is up to you.
+  '''
+  # leaves = bottom_seek(node)
+  # leaflist = []
+  # for i in leaves:
+  #   leaflist.append(i.name)
+  # print(leaflist)
+  # return node
+  # print("NO")
+  bestacc = test(node,examples)
+  # print("Original accuracy is ", bestacc)
+  if bestacc == 1:
+    # print("SEE YA")
+    # print("Validation set is 1!")
+    return bestacc
+
+  bestnode = node
+  # print("bestacc is ", bestacc)
+  # print("Original Accuracy is ", bestacc)
+  attempt = prune_helper(node, examples, bestacc)
+  # if attempt != -100:
+    # print("Attempted pruning acc is ", attempt[0])
+  if attempt == -100:
+    return bestnode
+  else:
+    if attempt[0] == 1:
+      return attempt[1]
+    return attempt[1]
+    print("NO PASS")
+    prune_helper(bestnode, examples, bestacc)
+
+def prune_helper(node, examples, bestacc):
+  leaves = bottom_seek(node)
+  if leaves == None:
+    # print("No more leaves")
+    return -100
+  leaflist = []
+  for i in leaves:
+    leaflist.append(i.name)
+  # print("bottom seeked leaves are ", leaflist)
+  # print("Going through leaves: ", leaflist)
+  return gothroughleaves(leaves, node, examples, bestacc)
+
+def gothroughleaves(lol, currnode, examples, bestacc):
+  if lol == []:
+    # print("Done going through leaves")
+    return -100
+
+  for leaf in lol:
+    # print ("Popping ", leaf.name)
+    storename = leaf.name
+    storelabel = leaf.label
+    leaf.name = None
+    leaf.label = leaf.mode
+
+    result = [test(currnode, examples), currnode]
+    # print("Tested pruned accuracy is ", result[0])
+    # print("---------")
+    # print(result[0])
+    # print(storename)
+    # print("bestacc is ", bestacc)
+    if result[0] <= bestacc:
+      leaf.name = storename
+      leaf.label = storelabel
+      # print(leaf.name)
+      del lol[0]
+      return gothroughleaves(lol, currnode, examples, bestacc)
+    else:
+      # print ("Pruning was better, new acc is: ", result[0])
+      return result
 
 
+def bottom_seek(node):
+  leaves = []
+  seeker(node, leaves)
+  # print("Leaves are ", leaves)
+  # print(leaves)
+  return leaves
+
+def seeker(node, leaves):
+  if node.label != None:
+    return leaves
+  if check_if_children_are_leafs(node) and node.label == None:
+    leaves.append(node)
+  else: 
+    nextnodes = []
+    for key in node.children.keys():
+      if node.children[key].name != None:
+        nextnodes.append(node.children[key])
+
+    for node in nextnodes:
+      seeker(node, leaves)
+
+def pop_node(node):
+  node.name = None
+  node.children = {}
+  node.label = node.mode
+  node.mode = None
+  return node
+
+def check_if_children_are_leafs(node):
+    all_children = len(node.children.keys())
+    counter = 0;
+    if node.children:
+        for child in node.children.keys():
+            if node.children[child].label != None:
+                counter += 1
+    return all_children == counter
 
 def main():
+  # prune(ID3([dict(x1=0, x2=0, x3=1, Class=0),
+  #         dict(x1=0, x2=1, x3=1, Class=0),
+  #         dict(x1=1, x2=0, x3=1, Class=1),
+  #         dict(x1=1, x2=1, x3=1, Class=0)], 0), [dict(x1=1, x2=0, x3=1, Class=0)])
+
+  # bottom_seek(ID3([dict(x1=1, x2=0, x3=0, Class=1),
+  #         dict(x1=0, x2=1, x3=0, Class=0),
+  #         dict(x1=1, x2=1, x3=0, Class=0),
+  #         dict(x1=1, x2=0, x3=1, Class=1)], 0))
+  # bottom_seek(ID3([dict(x1=1, x2=0, x3=0, Class=1),
+  #         dict(x1=0, x2=1, x3=0, Class=0),
+  #         dict(x1=1, x2=1, x3=0, Class=1),
+  #         dict(x1=1, x2=0, x3=0, Class=1),
+  #         dict(x1=0, x2=1, x3=1, Class=0),
+  #         dict(x1=1, x2=0, x3=1, Class=0)], 0))
   # print(ID3([dict(x1=1, x2=0, x3=0, Class=1),
   #            dict(x1=0, x2=1, x3=0, Class=0),
   #            dict(x1=1, x2=1, x3=0, Class=1),
@@ -50,15 +177,36 @@ def main():
   # print(getEntropy([[0],[0],[1],[1],[0],[1],[1],[0]]))
   # print(getEntropy([[0], [1]]))
 
-  # tree = ID3([dict(x1=1, x2=0, x3=0, Class=1),
-  #         dict(x1=0, x2=1, x3=0, Class=0),
-  #         dict(x1=1, x2=1, x3=0, Class=1),
-  #         dict(x1=1, x2=0, x3=0, Class=1),
-  #         dict(x1=0, x2=1, x3=1, Class=0),
-  #         dict(x1=1, x2=0, x3=1, Class=0)], 0)
+  # tree = ID3([dict(x1=0, x2=1, x3=0, x4=? , Class=0),
+  #         dict(x1=0, x2=1, x3=0, x4=? ,  Class=),
+  #         dict(x1=0, x2=0, x3=1, x4=0 ,  Class=),
+  #         dict(x1=0, x2=0, x3=0, x4=? ,  Class=),
+  #         dict(x1=0, x2=0, x3=1, x4=1 ,  Class=),
+  #         dict(x1=1, x2=0, x3=0, x4=0 ,  Class=),
+  #         dict(x1=1, x2=1, x3=0, x4=? ,  Class=),
+  #         dict(x1=1, x2=0, x3=0, x4=1 ,  Class=),
+  #         dict(x1=1, x2=1, x3=1, x4=? ,  Class=)], 0)
 
-  pass
+  data = [dict(x1=0, x2=1, x3=0, x4=1 , Class=0),
+          dict(x1=0, x2=1, x3=0, x4=0 ,  Class=0),
+          dict(x1=0, x2=0, x3=1, x4=0 ,  Class=1),
+          dict(x1=0, x2=0, x3=0, x4=1 ,  Class=1),
+          dict(x1=0, x2=0, x3=1, x4=1 ,  Class=1),
+          dict(x1=1, x2=0, x3=0, x4=0 ,  Class=0),
+          dict(x1=1, x2=1, x3=0, x4=0 ,  Class=0),
+          dict(x1=1, x2=0, x3=0, x4=1 ,  Class=0),
+          dict(x1=1, x2=1, x3=1, x4=0 ,  Class=1)]
 
+  tree = ID3(data, 0)
+  # print("Testing tree with training examples: ", test(tree, data))
+  leaves = bottom_seek(tree)
+  leaflist = []
+  for i in leaves:
+    leaflist.append(i.name)
+  # print(leaflist)
+  validationData = [dict(x1=0, x2=1, x3=0, x4=0 ,  Class=1)]
+  prune(tree, validationData)
+  print("Testing pruned tree with validation data: ", test(tree, validationData))
   # print(evaluate(tree, dict(x1=1, x2=1, x3=1)))
 
   # print(mode_attr([dict(x1=1, x2=0, x3=0, Class=1),
@@ -88,17 +236,13 @@ def main():
   # print(pick_best_attribute(data1, attributes))
   # print preprocessing(data1)
 
-def prune(node, examples):
-  '''
-  Takes in a trained tree and a validation set of examples.  Prunes nodes in order
-  to improve accuracy on the validation data; the precise pruning strategy is up to you.
-  '''
 
 def test(node, examples):
   '''
   Takes in a trained tree and a test set of examples.  Returns the accuracy (fraction
   of examples the tree classifies correctly).
   '''
+  examples = preprocessing(examples) # preprocess the examples
   total_length = len(examples)
   amount_correct = float(0);
   for example in examples:
@@ -106,6 +250,7 @@ def test(node, examples):
       del example['Class']
       if evaluate(node, example) == correct_class:
           amount_correct = amount_correct + 1
+      example['Class'] = correct_class
   return amount_correct/total_length
 
 def evaluate(node, example):
@@ -114,7 +259,7 @@ def evaluate(node, example):
   assigns to the example.
   '''
   current_node = node
-  while current_node.label == None:
+  while current_node.children != {} and current_node.label == None and current_node.name != "Class":
       decision = example[current_node.name]
       if current_node.children[decision]:
           current_node = current_node.children[decision]
@@ -131,12 +276,14 @@ def preprocessing(example_list):
         return_dict = copy.deepcopy(each)
         class_value = return_dict.pop('Class', 0)
         return_dict = each
-        value_list = each.values() # pop to take out the class value
-        if '?' in value_list:
-            parsed_list = list(filter(lambda x: x!="?", value_list))
-            # print parsed_list
+        value_list = each.values()
+        if "?" in value_list:
+            parsed_list = list(filter(lambda x: x !="?", value_list))
             if parsed_list:
-                mode_value = mode(parsed_list) #if there is a split decision then it takes the first value.
+                if len(parsed_list) == 1:
+                    mode_value = "y"
+                else:
+                    mode_value = mode(parsed_list) #if there is a split decision then it takes the first value.
                 # find keys that need to replace the values
                 for i, j in enumerate(value_list):
                     # print i
@@ -146,6 +293,7 @@ def preprocessing(example_list):
             return_list[z] = return_dict
         else:
             return_list[z] = each
+    # print return_list
     return return_list
 
 def getEntropy(data, attr): # returns Entropy for examples
