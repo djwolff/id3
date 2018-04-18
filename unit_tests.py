@@ -1,5 +1,6 @@
 import ID3, parse, random
 import matplotlib.pyplot as plt
+import numpy as np
 
 def testID3AndEvaluate():
   data = [dict(a=1, b=0, Class=1), dict(a=1, b=1, Class=1)]
@@ -98,7 +99,7 @@ def plot():
     without_prune_list = []
     x_axis = []
     for x in range(10, 300):
-        if x % 5 == 0 or x == 10:
+        if x == 10 or x % 5 == 0:
             average_with = []
             average_without = []
             for y in range(25):
@@ -110,7 +111,10 @@ def plot():
             without_prune_list.append(sum(average_without)/len(average_without))
             print "AVERAGE FOUND MY DUDE FOR: ", x
             print "With Prune average: ", sum(average_with)/len(average_with), " without: ", sum(average_without)/len(average_without)
-    plt.plot(x_axis, average_with, 'ro-', x_axis, average_without, 'go-')
+    x = np.array(x_axis)
+    plot_with_prune = np.array(with_prune_list)
+    plot_without_prune = np.array(without_prune_list)
+    plt.plot(x_axis, plot_with_prune, 'ro-', x_axis, plot_without_prune, 'go-')
     plt.legend(['With Pruning', 'Without Pruning'], loc=4)
     plt.axis([0, 300, 0, 1])
     plt.ylabel('Accuracy')
