@@ -4,3 +4,5 @@ class Node:
     self.children = {}
     self.name = None
     self.parent = None
+    self.mode = None
+    self.root = None

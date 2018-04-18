@@ -1,9 +1,5 @@
 import ID3, parse, random
 
-def main():
-  testID3AndEvaluate()
-  testID3AndTest()
-
 def testID3AndEvaluate():
   data = [dict(a=1, b=0, Class=1), dict(a=1, b=1, Class=1)]
   tree = ID3.ID3(data, 0)
@@ -23,6 +19,7 @@ def testPruning():
   ID3.prune(tree, validationData)
   if tree != None:
     ans = ID3.evaluate(tree, dict(a=0, b=1, c=1))
+    print ans
     if ans != 1:
       print "pruning test failed."
     else:
@@ -32,9 +29,9 @@ def testPruning():
 
 
 def testID3AndTest():
-  trainData = [dict(a=1, b=0, c=0, Class=1), dict(a=1, b=1, c=0, Class=1), 
+  trainData = [dict(a=1, b=0, c=0, Class=1), dict(a=1, b=1, c=0, Class=1),
   dict(a=0, b=0, c=0, Class=0), dict(a=0, b=1, c=0, Class=1)]
-  testData = [dict(a=1, b=0, c=1, Class=1), dict(a=1, b=1, c=1, Class=1), 
+  testData = [dict(a=1, b=0, c=1, Class=1), dict(a=1, b=1, c=1, Class=1),
   dict(a=0, b=0, c=1, Class=0), dict(a=0, b=1, c=1, Class=0)]
   tree = ID3.ID3(trainData, 0)
   fails = 0
@@ -62,13 +59,13 @@ def testID3AndTest():
 def testPruningOnHouseData(inFile):
   withPruning = []
   withoutPruning = []
-  data = parse.parse(inFile)
+  data = parse.parse(inFile)[:200]
   for i in range(100):
     random.shuffle(data)
     train = data[:len(data)/2]
     valid = data[len(data)/2:3*len(data)/4]
     test = data[3*len(data)/4:]
-  
+
     tree = ID3.ID3(train, 'democrat')
     acc = ID3.test(tree, train)
     print "training accuracy: ",acc
@@ -76,7 +73,7 @@ def testPruningOnHouseData(inFile):
     print "validation accuracy: ",acc
     acc = ID3.test(tree, test)
     print "test accuracy: ",acc
-  
+
     ID3.prune(tree, valid)
     acc = ID3.test(tree, train)
     print "pruned tree train accuracy: ",acc
@@ -93,5 +90,8 @@ def testPruningOnHouseData(inFile):
   print withoutPruning
   print "average with pruning",sum(withPruning)/len(withPruning)," without: ",sum(withoutPruning)/len(withoutPruning)
 
-main()
-  
+if __name__ == "__main__":
+    # testID3AndEvaluate()
+    # testPruning()
+    # testID3AndTest()
+    testPruningOnHouseData("house_votes_84.data") # replace infile with the data filepath

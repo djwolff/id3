@@ -27,6 +27,7 @@ def ID3(examples, default):
       best = pick_best_attribute(examples, list_of_attributes)
       leaf = Node()
       leaf.name = best
+      leaf.mode = mode_attr(examples, 'Class')
       split = getDict(examples, best)
       for key in split.keys():
         subtree = ID3(split[key], mode_attr(examples, 'Class'))
@@ -88,18 +89,48 @@ def main():
 
   # print(pick_best_attribute(data1, attributes))
   # print preprocessing(data1)
-
 def prune(node, examples):
   '''
   Takes in a trained tree and a validation set of examples.  Prunes nodes in order
   to improve accuracy on the validation data; the precise pruning strategy is up to you.
   '''
   best_acc = test(node, examples)
-  new_tree = copy.deepcopy(node)
-  # Start pruning at root.
-  if new_tree.children
+  # print best_acc
+  best_tree = copy.deepcopy(node)
 
-def check_if_children_are_leafs(node):
+  # Start pruning at root.
+  for each in examples:
+    prune_helper(node, examples, best_acc, node)
+
+def prune_helper(node, examples, best_acc, ancestor):
+     new_acc = 0
+     if check_if_all_children_are_leafs(node):
+         # If all children are leafs, then find the mode of the attributes and set that leaf
+         # Set the label and set children to {}, check accuracy
+         node_copy = copy.deepcopy(node)
+         node.label = node.mode
+         node.mode = None
+         node.name = None
+         node.children = {}
+         # check for accuracy
+         new_acc = test(ancestor, examples)
+         if new_acc <= best_acc:
+             # print ("we're about to return new acc which is ", new_acc, "and it is of type ", type(new_acc))
+             node.label = node_copy.label
+             node.mode = node_copy.mode
+             node.name = node_copy.name
+             node.children = node_copy.children
+
+     else:
+         nextnodes = []
+         for child in node.children.keys():
+             if node.children[child].name != None:
+                 nextnodes.append(node.children[child])
+         for each in nextnodes:
+             return prune_helper(each, examples, best_acc, ancestor)
+
+
+def check_if_all_children_are_leafs(node):
     all_children = len(node.children.keys())
     counter = 0;
     if node.children:
@@ -113,6 +144,7 @@ def test(node, examples):
   Takes in a trained tree and a test set of examples.  Returns the accuracy (fraction
   of examples the tree classifies correctly).
   '''
+  examples = preprocessing(examples) # preprocess the examples
   total_length = len(examples)
   amount_correct = float(0);
   for example in examples:
@@ -120,6 +152,7 @@ def test(node, examples):
       del example['Class']
       if evaluate(node, example) == correct_class:
           amount_correct = amount_correct + 1
+      example['Class'] = correct_class
   return amount_correct/total_length
 
 def evaluate(node, example):
@@ -127,8 +160,9 @@ def evaluate(node, example):
   Takes in a tree and one example.  Returns the Class value that the tree
   assigns to the example.
   '''
+
   current_node = node
-  while current_node.label == None:
+  while current_node.children != {} and current_node.label == None and current_node.name != "Class":
       decision = example[current_node.name]
       if current_node.children[decision]:
           current_node = current_node.children[decision]
@@ -145,12 +179,14 @@ def preprocessing(example_list):
         return_dict = copy.deepcopy(each)
         class_value = return_dict.pop('Class', 0)
         return_dict = each
-        value_list = each.values() # pop to take out the class value
-        if '?' in value_list:
-            parsed_list = list(filter(lambda x: x!="?", value_list))
-            # print parsed_list
+        value_list = each.values()
+        if "?" in value_list:
+            parsed_list = list(filter(lambda x: x !="?", value_list))
             if parsed_list:
-                mode_value = mode(parsed_list) #if there is a split decision then it takes the first value.
+                if len(parsed_list) == 1:
+                    mode_value = "y"
+                else:
+                    mode_value = mode(parsed_list) #if there is a split decision then it takes the first value.
                 # find keys that need to replace the values
                 for i, j in enumerate(value_list):
                     # print i
@@ -160,6 +196,7 @@ def preprocessing(example_list):
             return_list[z] = return_dict
         else:
             return_list[z] = each
+    # print return_list
     return return_list
 
 def getEntropy(data, attr): # returns Entropy for examples
