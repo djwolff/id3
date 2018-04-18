@@ -69,18 +69,18 @@ def testPruningOnHouseData(inFile, size):
     test = data[3*len(data)/4:]
 
     tree = ID3.ID3(train, 'democrat')
-    acc = ID3.test(tree, train)
-    # print "training accuracy: ",acc
-    acc = ID3.test(tree, valid)
-    # print "validation accuracy: ",acc
-    acc = ID3.test(tree, test)
-    # print "test accuracy: ",acc
+    # acc = ID3.test(tree, train)
+    # # print "training accuracy: ",acc
+    # acc = ID3.test(tree, valid)
+    # # print "validation accuracy: ",acc
+    # acc = ID3.test(tree, test)
+    # # print "test accuracy: ",acc
 
     ID3.prune(tree, valid)
-    acc = ID3.test(tree, train)
-    # print "pruned tree train accuracy: ",acc
-    acc = ID3.test(tree, valid)
-    # print "pruned tree validation accuracy: ",acc
+    # acc = ID3.test(tree, train)
+    # # print "pruned tree train accuracy: ",acc
+    # acc = ID3.test(tree, valid)
+    # # print "pruned tree validation accuracy: ",acc
     acc = ID3.test(tree, test)
     # print "pruned tree test accuracy: ",acc
     withPruning.append(acc)
@@ -97,19 +97,20 @@ def plot():
     with_prune_list = []
     without_prune_list = []
     x_axis = []
-    average_with = []
-    average_without = []
     for x in range(10, 300):
-        if x % 10 == 0:
-            for y in range(100):
+        if x % 5 == 0 or x == 10:
+            average_with = []
+            average_without = []
+            for y in range(25):
                 result = testPruningOnHouseData("house_votes_84.data", x)
                 average_with.append(result[0])
                 average_without.append(result[1])
             x_axis.append(x)
             with_prune_list.append(sum(average_with)/len(average_with))
             without_prune_list.append(sum(average_without)/len(average_without))
-    plt.plot(x_axis, average_with, 'ro-')
-    plt.plot(x_axis, average_without, 'go-')
+            print "AVERAGE FOUND MY DUDE FOR: ", x
+            print "With Prune average: ", sum(average_with)/len(average_with), " without: ", sum(average_without)/len(average_without)
+    plt.plot(x_axis, average_with, 'ro-', x_axis, average_without, 'go-')
     plt.legend(['With Pruning', 'Without Pruning'], loc=4)
     plt.axis([0, 300, 0, 1])
     plt.ylabel('Accuracy')
