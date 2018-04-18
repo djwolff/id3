@@ -13,14 +13,16 @@ def ID3(examples, default):
   Any missing attributes are denoted with a value of "?"
   '''
   examples = preprocessing(examples)
-  print examples
+  # print examples
   list_of_attributes = getAttributes(examples)
   if not examples:
       leaf = Node()
       leaf.label = default
   elif same_classification(examples) != None or only_trivial(examples, list_of_attributes):
+      # print(only_trivial(examples, list_of_attributes))
       leaf = Node()
       leaf.label = mode_attr(examples, 'Class')
+
   else:
       best = pick_best_attribute(examples, list_of_attributes)
       leaf = Node()
@@ -29,6 +31,7 @@ def ID3(examples, default):
       for key in split.keys():
         subtree = ID3(split[key], mode_attr(examples, 'Class'))
         leaf.children[key] = subtree
+
   # print(leaf.name, leaf.label)
 
   return leaf
@@ -46,12 +49,16 @@ def main():
   # print(getEntropy([[0],[1],[1],[1],[0],[1],[1],[1]]))
   # print(getEntropy([[0],[0],[1],[1],[0],[1],[1],[0]]))
   # print(getEntropy([[0], [1]]))
-  tree = ID3([dict(x1=1, x2=0, x3=0, Class=1),
-          dict(x1=0, x2=1, x3=0, Class=0),
-          dict(x1=1, x2=1, x3=0, Class=1),
-          dict(x1=1, x2=0, x3=0, Class=1),
-          dict(x1=0, x2=1, x3=1, Class=0),
-          dict(x1=1, x2=0, x3=1, Class=0)], 0)
+
+  # tree = ID3([dict(x1=1, x2=0, x3=0, Class=1),
+  #         dict(x1=0, x2=1, x3=0, Class=0),
+  #         dict(x1=1, x2=1, x3=0, Class=1),
+  #         dict(x1=1, x2=0, x3=0, Class=1),
+  #         dict(x1=0, x2=1, x3=1, Class=0),
+  #         dict(x1=1, x2=0, x3=1, Class=0)], 0)
+
+  pass
+
   # print(evaluate(tree, dict(x1=1, x2=1, x3=1)))
 
   # print(mode_attr([dict(x1=1, x2=0, x3=0, Class=1),
@@ -93,7 +100,7 @@ def test(node, examples):
   of examples the tree classifies correctly).
   '''
   total_length = len(examples)
-  amount_correct = 0;
+  amount_correct = float(0);
   for example in examples:
       correct_class = example['Class']
       del example['Class']
@@ -155,17 +162,17 @@ def getEntropy(data, attr): # returns Entropy for examples
     #   return -1
   tot = float(len(data))
 
-  all = count_obj.values()
+  vals = count_obj.values()
 
   # print(both)
 
   tot = float(tot)
 
   h = 0
-  if 0 in all: return 0
+  if 0 in vals: return 0 #is this right?
   else:
-    for each in all:
-      h = h + (each/tot)*(math.log((each/tot), 2))
+    for each in vals:
+      h = h + (each/tot)*(math.log((each/tot), len(vals))) #is it still log2??? (CHECK LATER)
   return -h
 
 
@@ -239,13 +246,13 @@ def pick_best_attribute(data_set, attribute_metadata):
           lowest_entropy = entropy
           best = attribute
 
-      elif currdict.keys() == [0]:
-        # print('Split on ', attribute, 'is trivial')
-        continue
+      # elif currdict.keys() == [0]:
+      #   # print('Split on ', attribute, 'is trivial')
+      #   continue
 
-      elif currdict.keys() == [1]:
-        # print('Split on ', attribute, 'is trivial')
-        continue
+      # elif currdict.keys() == [1]:
+      #   # print('Split on ', attribute, 'is trivial')
+      #   continue
 
     # print('Splitting at ' + best)
     return best
@@ -255,7 +262,7 @@ def only_trivial(data_set, attribute_metadata):
   for attribute in attribute_metadata:
       # print('INSIDE ATTRIBUTE', attribute)
       currdict = getDict(data_set, attribute)
-      if currdict.keys() == [0, 1] or currdict.keys() == [1, 0]:
+      if len(currdict.keys()) > 1:
         flag = False
   # if flag == True: print("Only trivial splits")
   return flag

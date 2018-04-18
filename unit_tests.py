@@ -1,5 +1,9 @@
 import ID3, parse, random
 
+def main():
+  testID3AndEvaluate()
+  testID3AndTest()
+
 def testID3AndEvaluate():
   data = [dict(a=1, b=0, Class=1), dict(a=1, b=1, Class=1)]
   tree = ID3.ID3(data, 0)
@@ -88,4 +92,6 @@ def testPruningOnHouseData(inFile):
   print withPruning
   print withoutPruning
   print "average with pruning",sum(withPruning)/len(withPruning)," without: ",sum(withoutPruning)/len(withoutPruning)
+
+main()
   
