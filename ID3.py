@@ -100,11 +100,11 @@ def prune(node, examples):
 
   # Start pruning at root.
   for each in examples:
-    prune_helper(node, examples, best_acc, node)
+      prune_helper(node, examples, best_acc, node)
 
 def prune_helper(node, examples, best_acc, ancestor):
      new_acc = 0
-     if check_if_all_children_are_leafs(node):
+     if check_if_all_children_are_leafs(node) and node.label == None:
          # If all children are leafs, then find the mode of the attributes and set that leaf
          # Set the label and set children to {}, check accuracy
          node_copy = copy.deepcopy(node)

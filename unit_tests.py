@@ -1,4 +1,5 @@
 import ID3, parse, random
+import matplotlib.pyplot as plt
 
 def testID3AndEvaluate():
   data = [dict(a=1, b=0, Class=1), dict(a=1, b=1, Class=1)]
@@ -56,10 +57,11 @@ def testID3AndTest():
     print "testID3andTest failed -- no tree returned."
 
 # inFile - string location of the house data file
-def testPruningOnHouseData(inFile):
+def testPruningOnHouseData(inFile, size):
   withPruning = []
   withoutPruning = []
-  data = parse.parse(inFile)[:200]
+  data = parse.parse(inFile)
+  data = data[:size]
   for i in range(100):
     random.shuffle(data)
     train = data[:len(data)/2]
@@ -68,30 +70,56 @@ def testPruningOnHouseData(inFile):
 
     tree = ID3.ID3(train, 'democrat')
     acc = ID3.test(tree, train)
-    print "training accuracy: ",acc
+    # print "training accuracy: ",acc
     acc = ID3.test(tree, valid)
-    print "validation accuracy: ",acc
+    # print "validation accuracy: ",acc
     acc = ID3.test(tree, test)
-    print "test accuracy: ",acc
+    # print "test accuracy: ",acc
 
     ID3.prune(tree, valid)
     acc = ID3.test(tree, train)
-    print "pruned tree train accuracy: ",acc
+    # print "pruned tree train accuracy: ",acc
     acc = ID3.test(tree, valid)
-    print "pruned tree validation accuracy: ",acc
+    # print "pruned tree validation accuracy: ",acc
     acc = ID3.test(tree, test)
-    print "pruned tree test accuracy: ",acc
+    # print "pruned tree test accuracy: ",acc
     withPruning.append(acc)
     tree = ID3.ID3(train+valid, 'democrat')
     acc = ID3.test(tree, test)
-    print "no pruning test accuracy: ",acc
+    # print "no pruning test accuracy: ",acc
     withoutPruning.append(acc)
-  print withPruning
-  print withoutPruning
+  # print withPruning
+  # print withoutPruning
   print "average with pruning",sum(withPruning)/len(withPruning)," without: ",sum(withoutPruning)/len(withoutPruning)
+  return [sum(withPruning)/len(withPruning), sum(withoutPruning)/len(withoutPruning)]
+
+def plot():
+    with_prune_list = []
+    without_prune_list = []
+    x_axis = []
+    average_with = []
+    average_without = []
+    for x in range(10, 300):
+        if x % 10 == 0:
+            for y in range(100):
+                result = testPruningOnHouseData("house_votes_84.data", x)
+                average_with.append(result[0])
+                average_without.append(result[1])
+            x_axis.append(x)
+            with_prune_list.append(sum(average_with)/len(average_with))
+            without_prune_list.append(sum(average_without)/len(average_without))
+    plt.plot(x_axis, average_with, 'ro-')
+    plt.plot(x_axis, average_without, 'go-')
+    plt.legend(['With Pruning', 'Without Pruning'], loc=4)
+    plt.axis([0, 300, 0, 1])
+    plt.ylabel('Accuracy')
+    plt.xlabel('Data size')
+    plt.title('Plot of Accuracy and Data size')
+    plt.show()
 
 if __name__ == "__main__":
     # testID3AndEvaluate()
     # testPruning()
     # testID3AndTest()
-    testPruningOnHouseData("house_votes_84.data") # replace infile with the data filepath
+    # testPruningOnHouseData("house_votes_84.data") # replace infile with the data filepath
+    plot()
