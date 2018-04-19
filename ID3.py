@@ -95,49 +95,55 @@ def prune(node, examples):
   to improve accuracy on the validation data; the precise pruning strategy is up to you.
   '''
   # global ancestor
-  dfs(node, examples)
+  leaves = dfs(node, examples)
+  best_node_copy = copy.deepcopy(node)
+  best_leaves = copy.deepcopy(leaves)
+  best_acc = test(best_node_copy, examples)
+  averages = []
+  leaves_shuffles = []
+  for j in range(len(leaves)):
+      leaf_acc = []
+      random.shuffle(leaves)
+      for leaf in leaves:
+          if leaf.mode != None:
+              children = leaf.children
+              label = leaf.label
+              leaf.label = leaf.mode
+              leaf.children = {}
+              new_acc = test(node, examples)
+              if new_acc <= best_acc:
+                  leaf.label = label
+                  leaf.children = children
+                  # node = best_node_copy
+              else:
+                  # best_node_copy = node
+                  best_acc = new_acc
+          leaf_acc.append(best_acc)
+      averages.append(sum(leaf_acc)/len(leaf_acc))
+      leaves_shuffles.append(leaves)
+  node = leaves_shuffles[averages.index(max(averages))]
+
 
 def dfs(root, examples):
-    best = test(root, examples)
+    nodes = []
     stack = [root]
     while len(stack) > 0:
         cur_node = stack[0]
         stack = stack[1:]
-        # check if can be pruned:
-        if check_if_all_children_are_leafs(cur_node) == True:
-            # continue
-            old_root_copy = copy.deepcopy(root)
-            old_acc = test(root, examples)
-            # print 'cur_node.mode: ', cur_node.mode
-            cur_node.label = cur_node.mode
-            cur_node.mode = None
-            cur_node.children = {}
-            cur_node.name = None
-            new_acc = test(root, examples)
-            # print "new_acc: ", new_acc, " old_acc: ", old_acc
-            # print 'new_acc:  ', new_acc, ' best_acc: ', best
-            if new_acc <= old_acc:
-                root = old_root_copy
-                # print test(root, examples) == test(old_root_copy, examples)
-                # print  'reverting back to original tree'
-            elif new_acc > old_acc:
-                # print 'new accuracy is better than old.'
-                root = old_root_copy
-                best = new_acc
-        else:
-            for child in cur_node.children.keys():
-                stack.insert(0, cur_node.children[child])
+        nodes.append(cur_node)
+        for child in cur_node.children.keys():
+            stack.insert(0, cur_node.children[child])
+    return nodes
 
 
-
-def check_if_all_children_are_leafs(node):
-    all_children = len(node.children.keys())
-    counter = 0;
-    if node.children != {}:
-        for child in node.children.keys():
-            if node.children[child].label != None and node.children[child].children == {}:
-                counter += 1
-    return (all_children == counter and all_children != 0)
+# def check_if_all_children_are_leafs(node):
+#     all_children = len(node.children.keys())
+#     counter = 0;
+#     if node.children != {}:
+#         for child in node.children.keys():
+#             if node.children[child].label != None and node.children[child].children == {}:
+#                 counter += 1
+#     return (all_children == counter and all_children != 0)
 
 # def prune(node, examples):
 #   '''

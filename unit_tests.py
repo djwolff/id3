@@ -63,7 +63,7 @@ def testPruningOnHouseData(inFile, size):
   withoutPruning = []
   data = parse.parse(inFile)
   data = data[:size]
-  for i in range(100):
+  for i in range(50):
     random.shuffle(data)
     train = data[:len(data)/2]
     valid = data[len(data)/2:3*len(data)/4]
