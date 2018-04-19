@@ -1,4 +1,6 @@
 import ID3, parse, random
+# import matplotlib.pyplot as plt
+# import numpy as np
 
 # def main():
   # testID3AndEvaluate()

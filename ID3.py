@@ -39,6 +39,21 @@ def ID3(examples, default):
 
   return leaf
 
+# def prune(node, examples):
+#   bestacc = test(node,examples)
+#   prune2(node, examples, bestacc)
+
+# def prune2(node, examples):
+
+#   if node.label != None:
+#     return
+
+#   node.label = node.mode
+#   acc = test(node, examples)
+#   if acc > bestacc:
+#     return
+
+#   node.label == None
 
 def prune(node, examples):
   '''
@@ -67,12 +82,11 @@ def prune(node, examples):
     # print("Attempted pruning acc is ", attempt[0])
   if attempt == -100:
     return bestnode
-  else:
-    if attempt[0] == 1:
-      return attempt[1]
+  elif attempt[0] == 1:
     return attempt[1]
-    print("NO PASS")
-    prune_helper(bestnode, examples, bestacc)
+  else: prune(attempt[1], examples)
+
+
 
 def prune_helper(node, examples, bestacc):
   leaves = bottom_seek(node)
@@ -95,6 +109,7 @@ def gothroughleaves(lol, currnode, examples, bestacc):
     # print ("Popping ", leaf.name)
     storename = leaf.name
     storelabel = leaf.label
+    storechildren = leaf.children
     leaf.name = None
     leaf.label = leaf.mode
 
@@ -107,6 +122,7 @@ def gothroughleaves(lol, currnode, examples, bestacc):
     if result[0] <= bestacc:
       leaf.name = storename
       leaf.label = storelabel
+      leaf.children = storechildren
       # print(leaf.name)
       del lol[0]
       return gothroughleaves(lol, currnode, examples, bestacc)
@@ -203,10 +219,23 @@ def main():
   leaflist = []
   for i in leaves:
     leaflist.append(i.name)
-  # print(leaflist)
+  print(leaflist)
+  # for key in tree.children.keys():
+  #   print(tree.children[key].label)
+  #   for k in tree.children[key].keys():
+  #     print(tree.children[key].label)
   validationData = [dict(x1=0, x2=1, x3=0, x4=0 ,  Class=1)]
   prune(tree, validationData)
   print("Testing pruned tree with validation data: ", test(tree, validationData))
+  bottom_seek(tree)
+  for i in leaves:
+    leaflist.append(i.name)
+  print(leaflist)
+
+  # for key in tree.children.keys():
+  #   print(tree.children[key].label)
+  #   for k in tree.children[key].keys():
+  #     print(tree.children[key].label)
   # print(evaluate(tree, dict(x1=1, x2=1, x3=1)))
 
   # print(mode_attr([dict(x1=1, x2=0, x3=0, Class=1),
