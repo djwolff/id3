@@ -71,17 +71,17 @@ def testPruningOnHouseData(inFile, size):
 
     tree = ID3.ID3(train, 'democrat')
     # acc = ID3.test(tree, train)
-    # # print "training accuracy: ",acc
+    # print "training accuracy: ",acc
     # acc = ID3.test(tree, valid)
-    # # print "validation accuracy: ",acc
+    # print "validation accuracy: ",acc
     # acc = ID3.test(tree, test)
-    # # print "test accuracy: ",acc
+    # print "test accuracy: ",acc
 
     ID3.prune(tree, valid)
     # acc = ID3.test(tree, train)
-    # # print "pruned tree train accuracy: ",acc
+    # print "pruned tree train accuracy: ",acc
     # acc = ID3.test(tree, valid)
-    # # print "pruned tree validation accuracy: ",acc
+    # print "pruned tree validation accuracy: ",acc
     acc = ID3.test(tree, test)
     # print "pruned tree test accuracy: ",acc
     withPruning.append(acc)
@@ -98,19 +98,16 @@ def plot():
     with_prune_list = []
     without_prune_list = []
     x_axis = []
-    for x in range(301):
-        if x == 10 or x % 25 == 0:
+    for x in range(1, 301):
+        if x== 5 or x == 10 or x % 25 == 0:
             average_with = []
             average_without = []
-            for y in range(1):
-                result = testPruningOnHouseData("house_votes_84.data", x)
-                average_with.append(result[0])
-                average_without.append(result[1])
+            result = testPruningOnHouseData("house_votes_84.data", x)
             x_axis.append(x)
-            with_prune_list.append(sum(average_with)/len(average_with))
-            without_prune_list.append(sum(average_without)/len(average_without))
+            with_prune_list.append(result[0])
+            without_prune_list.append(result[1])
             print "AVERAGE FOUND MY DUDE FOR: ", x
-            print "With Prune average: ", sum(average_with)/len(average_with), " without: ", sum(average_without)/len(average_without)
+            print "With Prune average: ", result[0], " without: ", result[1]
     x = np.array(x_axis)
     plot_with_prune = np.array(with_prune_list)
     plot_without_prune = np.array(without_prune_list)

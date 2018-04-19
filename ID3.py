@@ -3,6 +3,7 @@ import math
 from collections import Counter
 import copy
 import random
+import sys
 
 
 def ID3(examples, default):
@@ -33,7 +34,6 @@ def ID3(examples, default):
         subtree = ID3(split[key], mode_attr(examples, 'Class'))
         leaf.children[key] = subtree
         leaf.children[key].parent = leaf
-
   # print(leaf.name, leaf.label)
 
   return leaf
@@ -89,63 +89,167 @@ def main():
 
   # print(pick_best_attribute(data1, attributes))
   # print preprocessing(data1)
-best_acc = 0
 def prune(node, examples):
   '''
   Takes in a trained tree and a validation set of examples.  Prunes nodes in order
   to improve accuracy on the validation data; the precise pruning strategy is up to you.
   '''
-  global best_acc
-  best_acc = test(node, examples)
-  # print best_acc
-  # best_tree = copy.deepcopy(node)
+  # global ancestor
+  dfs(node, examples)
 
-  # Start pruning at root.
-  # for each in examples:
-  prune_helper(node, examples, node)
+def dfs(root, examples):
+    best = test(root, examples)
+    stack = [root]
+    while len(stack) > 0:
+        cur_node = stack[0]
+        stack = stack[1:]
+        # check if can be pruned:
+        if check_if_all_children_are_leafs(cur_node) == True:
+            # continue
+            old_root_copy = copy.deepcopy(root)
+            old_acc = test(root, examples)
+            # print 'cur_node.mode: ', cur_node.mode
+            cur_node.label = cur_node.mode
+            cur_node.mode = None
+            cur_node.children = {}
+            cur_node.name = None
+            new_acc = test(root, examples)
+            # print "new_acc: ", new_acc, " old_acc: ", old_acc
+            # print 'new_acc:  ', new_acc, ' best_acc: ', best
+            if new_acc <= old_acc:
+                root = old_root_copy
+                # print test(root, examples) == test(old_root_copy, examples)
+                # print  'reverting back to original tree'
+            elif new_acc > old_acc:
+                # print 'new accuracy is better than old.'
+                root = old_root_copy
+                best = new_acc
+        else:
+            for child in cur_node.children.keys():
+                stack.insert(0, cur_node.children[child])
 
-def prune_helper(node, examples, ancestor):
-     new_acc = 0
-     global best_acc
-     if check_if_all_children_are_leafs(node) and node.label == None:
-         # If all children are leafs, then find the mode of the attributes and set that leaf
-         # Set the label and set children to {}, check accuracy
-         # node_copy = copy.deepcopy(node)
-         label = node.label
-         mode = node.mode
-         name = node.name
-         children = node.children
-         node.label = node.mode
-         node.mode = None
-         node.name = None
-         node.children = {}
-         # check for accuracy
-         new_acc = test(ancestor, examples)
-         if new_acc <= best_acc:
-             # print ("we're about to return new acc which is ", new_acc, "and it is of type ", type(new_acc))
-             node.label = label
-             node.mode = mode
-             node.name = name
-             node.children = children
-         else:
-             best_acc = new_acc
-     else:
-         nextnodes = []
-         for child in node.children.keys():
-             if node.children[child].name != None and len(node.children[child].children.keys()) == 0:
-                 nextnodes.append(node.children[child])
-         for each in nextnodes:
-             return prune_helper(each, examples, ancestor)
 
 
 def check_if_all_children_are_leafs(node):
     all_children = len(node.children.keys())
     counter = 0;
-    if node.children:
+    if node.children != {}:
         for child in node.children.keys():
-            if node.children[child].label != None:
+            if node.children[child].label != None and node.children[child].children == {}:
                 counter += 1
-    return all_children == counter
+    return (all_children == counter and all_children != 0)
+
+# def prune(node, examples):
+#   '''
+#   Takes in a trained tree and a validation set of examples.  Prunes nodes in order
+#   to improve accuracy on the validation data; the precise pruning strategy is up to you.
+#   '''
+#   # leaves = bottom_seek(node)
+#   # leaflist = []
+#   # for i in leaves:
+#   #   leaflist.append(i.name)
+#   # print(leaflist)
+#   # return node
+#   # print("NO")
+#   bestacc = test(node,examples)
+#   # print("Original accuracy is ", bestacc)
+#   if bestacc == 1:
+#     # print("SEE YA")
+#     # print("Validation set is 1!")
+#     return bestacc
+#
+#   bestnode = node
+#   # print("bestacc is ", bestacc)
+#   # print("Original Accuracy is ", bestacc)
+#   attempt = prune_helper(node, examples, bestacc)
+#   # if attempt != -100:
+#     # print("Attempted pruning acc is ", attempt[0])
+#   if attempt == -100:
+#     return bestnode
+#   else:
+#     if attempt[0] == 1:
+#       return attempt[1]
+#     return attempt[1]
+#     print("NO PASS")
+#     prune_helper(bestnode, examples, bestacc)
+#
+# def prune_helper(node, examples, bestacc):
+#   leaves = bottom_seek(node)
+#   if leaves == None:
+#     # print("No more leaves")
+#     return -100
+#   leaflist = []
+#   for i in leaves:
+#     leaflist.append(i.name)
+#   # print("bottom seeked leaves are ", leaflist)
+#   # print("Going through leaves: ", leaflist)
+#   return gothroughleaves(leaves, node, examples, bestacc)
+#
+# def gothroughleaves(lol, currnode, examples, bestacc):
+#   if lol == []:
+#     # print("Done going through leaves")
+#     return -100
+#
+#   for leaf in lol:
+#     # print ("Popping ", leaf.name)
+#     storename = leaf.name
+#     storelabel = leaf.label
+#     leaf.name = None
+#     leaf.label = leaf.mode
+#
+#     result = [test(currnode, examples), currnode]
+#     # print("Tested pruned accuracy is ", result[0])
+#     # print("---------")
+#     # print(result[0])
+#     # print(storename)
+#     # print("bestacc is ", bestacc)
+#     if result[0] <= bestacc:
+#       leaf.name = storename
+#       leaf.label = storelabel
+#       # print(leaf.name)
+#       del lol[0]
+#       return gothroughleaves(lol, currnode, examples, bestacc)
+#     else:
+#       # print ("Pruning was better, new acc is: ", result[0])
+#       return result
+#
+#
+# def bottom_seek(node):
+#   leaves = []
+#   seeker(node, leaves)
+#   # print("Leaves are ", leaves)
+#   # print(leaves)
+#   return leaves
+#
+# def seeker(node, leaves):
+#   if node.label != None:
+#     return leaves
+#   if check_if_children_are_leafs(node) and node.label == None:
+#     leaves.append(node)
+#   else:
+#     nextnodes = []
+#     for key in node.children.keys():
+#       if node.children[key].name != None:
+#         nextnodes.append(node.children[key])
+#
+#     for node in nextnodes:
+#       seeker(node, leaves)
+#
+# def pop_node(node):
+#   node.name = None
+#   node.children = {}
+#   node.label = node.mode
+#   node.mode = None
+#   return node
+#
+# def check_if_children_are_leafs(node):
+#     all_children = len(node.children.keys())
+#     counter = 0;
+#     if node.children:
+#         for child in node.children.keys():
+#             if node.children[child].label != None:
+#                 counter += 1
+#     return all_children == counter
 
 def test(node, examples):
   '''
